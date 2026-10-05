@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f6fb">
+    <title>人机验证</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #202943;
+        background: #f4f6fb;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 32px 18px;
+        background:
+          radial-gradient(ellipse at 14% 12%, rgba(195, 211, 255, 0.4), transparent 34%),
+          radial-gradient(ellipse at 90% 88%, rgba(221, 207, 255, 0.34), transparent 32%),
+          #f4f6fb;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .page {
+        width: min(100%, 480px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        color: #596581;
+        font-size: 13px;
+        font-weight: 650;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border: 1px solid #dce2f1;
+        border-radius: 9px;
+        color: #5c5be8;
+        background: #fff;
+        box-shadow: 0 3px 9px rgba(43, 54, 94, 0.06);
+      }
+
+      .card {
+        overflow: hidden;
+        padding: 34px;
+        border: 1px solid rgba(220, 225, 239, 0.9);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 22px 70px rgba(39, 52, 92, 0.11), 0 2px 8px rgba(39, 52, 92, 0.04);
+      }
+      
+      h1 {
+        margin: 0;
+        font-size: clamp(25px, 6vw, 30px);
+        letter-spacing: -0.045em;
+        line-height: 1.2;
+      }
+
+      .intro {
+        margin: 12px 0 25px;
+        color: #727c94;
+        font-size: 14px;
+        line-height: 1.75;
+      }
+
+      .challenge-frame {
+        overflow: hidden;
+        border: 1px solid #e1e6f2;
+        border-radius: 14px;
+        background: #eef1fa;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2.8 / 1;
+      }
+
+      .challenge-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 2px 0;
+        color: #8992a7;
+        font-size: 11px;
+      }
+
+      .refresh {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 0 4px 8px;
+        border: 0;
+        color: #6768cf;
+        background: transparent;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .refresh:hover {
+        color: #4546b8;
+      }
+
+      .refresh:focus-visible,
+      .verify:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(102, 103, 217, 0.28);
+        outline-offset: 3px;
+      }
+
+      label {
+        display: block;
+        margin: 24px 0 9px;
+        color: #414b65;
+        font-size: 13px;
+        font-weight: 680;
+      }
+
+      .answer-row {
+        display: flex;
+        gap: 10px;
+      }
+
+      input {
+        width: 100%;
+        min-width: 0;
+        height: 48px;
+        padding: 0 15px;
+        border: 1px solid #dce2ee;
+        border-radius: 11px;
+        color: #27304a;
+        background: #fbfcff;
+        font-size: 16px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+      }
+
+      input::placeholder {
+        color: #a7aec0;
+        font-size: 13px;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      input:focus {
+        border-color: #7777e5;
+        box-shadow: 0 0 0 4px rgba(102, 103, 217, 0.1);
+        outline: none;
+      }
+
+      .verify {
+        flex: 0 0 auto;
+        min-width: 112px;
+        height: 48px;
+        padding: 0 17px;
+        border: 0;
+        border-radius: 11px;
+        color: white;
+        background: #5f60d8;
+        box-shadow: 0 5px 12px rgba(95, 96, 216, 0.2);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 700;
+        transition: background 160ms ease, transform 160ms ease;
+      }
+
+      .verify:hover {
+        transform: translateY(-1px);
+        background: #5051c7;
+      }
+
+      .verify:active {
+        transform: translateY(0);
+      }
+
+      .feedback {
+        min-height: 22px;
+        margin: 12px 1px 0;
+        color: #727c94;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .feedback[data-state="error"] {
+        color: #c34b59;
+      }
+
+      .feedback[data-state="success"] {
+        color: #248568;
+      }
+
+      .footnote {
+        margin: 21px 0 0;
+        color: #a0a8b9;
+        font-size: 11px;
+        line-height: 1.7;
+        text-align: center;
+      }
+
+      @media (max-width: 420px) {
+        .card {
+          padding: 26px 21px;
+        }
+
+        .verify {
+          min-width: 94px;
+          padding: 0 12px;
+        }
+
+        .challenge-meta {
+          font-size: 10px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="brand" aria-label="人机验证">
+        <span class="brand-mark" aria-hidden="true">✳</span>
+        <span>I'm not a bot</span>
+      </div>
+
+      <section class="card" aria-labelledby="title">
+        <h1 id="title">人机验证</h1>
+        <p class="intro">找出画面中央隐藏的 3 个字母，并输入下方。</p>
+
+        <div class="challenge-frame">
+          <canvas id="challenge" width="560" height="200" role="img" aria-label="动态噪声验证图：找出由向下移动噪声构成的三个字母"></canvas>
+        </div>
+        <div class="challenge-meta">
+          <button class="refresh" id="refresh" type="button" aria-label="刷新验证图">
+            <span aria-hidden="true">↻</span> 换一张
+          </button>
+        </div>
+
+        <form id="verify-form" novalidate>
+          <label for="answer">输入你看到的 3 个字母</label>
+          <div class="answer-row">
+            <input id="answer" name="answer" type="text" maxlength="3" minlength="3" placeholder="例如：ABC" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="feedback" required>
+            <button class="verify" type="submit">验证</button>
+          </div>
+          <p class="feedback" id="feedback" role="status" aria-live="polite">提示：观察噪声的移动方向，而不是寻找静止的文字。</p>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        const canvas = document.querySelector("#challenge");
+        const context = canvas.getContext("2d", { alpha: false });
+        const maskCanvas = document.createElement("canvas");
+        const maskContext = maskCanvas.getContext("2d", { willReadFrequently: true });
+        const input = document.querySelector("#answer");
+        const form = document.querySelector("#verify-form");
+        const feedback = document.querySelector("#feedback");
+        const refreshButton = document.querySelector("#refresh");
+        const width = canvas.width;
+        const height = canvas.height;
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const particleCount = 1600;
+        const particleSize = 3;
+        const noiseColor = "#596a99";
+        let answer = "";
+        let mask = new Uint8Array(width * height);
+        let backgroundNoise = [];
+        let letterNoise = [];
+        let lastFrame = 0;
+
+        maskCanvas.width = width;
+        maskCanvas.height = height;
+
+        function randomParticle(insideLetters = false) {
+          for (let attempt = 0; attempt < 1000; attempt += 1) {
+            const x = Math.floor(Math.random() * width);
+            const y = Math.floor(Math.random() * height);
+            if (!insideLetters || mask[y * width + x]) {
+              return { x, y, alpha: 0.24 + Math.random() * 0.32 };
+            }
+          }
+          return { x: width / 2, y: height / 2, alpha: 0.4 };
+        }
+
+        function createChallenge() {
+          answer = Array.from({ length: 3 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+          maskContext.clearRect(0, 0, width, height);
+          maskContext.fillStyle = "#fff";
+          maskContext.textAlign = "center";
+          maskContext.textBaseline = "middle";
+          maskContext.font = '800 102px "Arial Black", Impact, sans-serif';
+          maskContext.fillText(answer, width / 2, height / 2 + 1, width - 70);
+
+          const pixels = maskContext.getImageData(0, 0, width, height).data;
+          mask = new Uint8Array(width * height);
+          for (let index = 0; index < mask.length; index += 1) {
+            mask[index] = pixels[index * 4 + 3] > 20 ? 1 : 0;
+          }
+
+          const letterArea = mask.reduce((total, pixel) => total + pixel, 0);
+          backgroundNoise = Array.from({ length: particleCount }, () => randomParticle());
+          letterNoise = Array.from(
+            { length: Math.round(particleCount * letterArea / mask.length) },
+            () => randomParticle(true)
+          );
+          input.value = "";
+          feedback.textContent = "提示：观察噪声的移动方向，而不是寻找静止的文字。";
+          feedback.dataset.state = "";
+        }
+
+        function drawNoise(particles, direction, speed, isLetter) {
+          context.fillStyle = noiseColor;
+          for (const particle of particles) {
+            context.globalAlpha = particle.alpha;
+            context.fillRect(Math.round(particle.x), Math.round(particle.y), particleSize, particleSize);
+
+            particle.y += direction * speed;
+            if (particle.y < 0 || particle.y > height) {
+              Object.assign(particle, randomParticle(isLetter));
+              particle.y = direction < 0 ? height : 0;
+            }
+            if (isLetter) {
+              const px = Math.max(0, Math.min(width - 1, Math.floor(particle.x)));
+              const py = Math.max(0, Math.min(height - 1, Math.floor(particle.y)));
+              if (!mask[py * width + px]) Object.assign(particle, randomParticle(true));
+            }
+          }
+        }
+
+        function drawFrame(timestamp) {
+          if (timestamp - lastFrame > 25) {
+            lastFrame = timestamp;
+            const gradient = context.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, "#f3f5fc");
+            gradient.addColorStop(0.52, "#e8ecf8");
+            gradient.addColorStop(1, "#f4f1fa");
+            context.globalAlpha = 1;
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, width, height);
+            drawNoise(backgroundNoise, -1, 0.72, false);
+            drawNoise(letterNoise, 1, 0.72, true);
+            context.globalAlpha = 1;
+          }
+          requestAnimationFrame(drawFrame);
+        }
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const entered = input.value.trim().toUpperCase();
+          if (entered.length !== 3) {
+            feedback.textContent = "请输入完整的 3 个字母。";
+            feedback.dataset.state = "error";
+            input.focus();
+            return;
+          }
+          if (entered === answer) {
+            feedback.textContent = "验证通过！你成功识别了反向移动的噪声。";
+            feedback.dataset.state = "success";
+          } else {
+            feedback.textContent = "还没有匹配上，再观察一下移动方向，或换一张试试。";
+            feedback.dataset.state = "error";
+            input.select();
+          }
+        });
+
+        refreshButton.addEventListener("click", () => {
+          createChallenge();
+          input.focus();
+        });
+
+        input.addEventListener("input", () => {
+          input.value = input.value.replace(/[^a-z]/gi, "").slice(0, 3).toUpperCase();
+          if (feedback.dataset.state) {
+            feedback.textContent = "提示：观察噪声的移动方向，而不是寻找静止的文字。";
+            feedback.dataset.state = "";
+          }
+        });
+
+        createChallenge();
+        requestAnimationFrame(drawFrame);
+      })();
+    </script>
+  </body>
+</html>
