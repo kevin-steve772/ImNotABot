@@ -12,7 +12,7 @@
 
 ## 运行
 
-直接在浏览器中打开 [`src/index.html`](src/index.html) 即可使用。
+直接在浏览器中打开 [`index.html`](index.html) 即可使用。
 
 ## 安全说明
 
